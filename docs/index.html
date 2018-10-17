@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf8">
+<meta http-equiv="Content-type" name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, width=device-width">
+<title>Ancient Books</title>
+<style>
+html,body{width:100%;height:100%;margin:0;padding:0;font-family:"Microsoft YaHei";overflow-x:hidden;}
+body{background:url('static/img/bg.jpg') no-repeat;}
+#wrapper{width:100%;height:100%;margin:0;padding:0;overflow-x:hidden;overflow-y:auto;}
+#inputbox{position: absolute; left: 450px; top: 10px; }
+#keyword{background:url('static/img/inputline.png') 0 35px no-repeat transparent;
+         border:0;height:40px;line-height:30px;text-indent:10px;
+         font-size:18px; width:290px;font-family:'Microsoft YaHei';
+         float:left;font-weight:bold;color:#666666;}
+#keyword:focus{outline:0;}
+#submit{width:35px;height:35px;border:0;float:left;
+        background:url('static/img/searchbtn.png') no-repeat transparent;}
+#submit:hover{cursor:pointer;}
+#submit:focus{outline:0;}
+#resultbox{position: absolute; left: 0px; top: 80px; margin:0 0 0 40px; width:1200px;}
+#pagerbox{float:left;padding:0 0 0 40px;}
+#listbox{float:left;}
+#list{float:left;list-style:none;}
+#list li{float:left;margin:0 0 10px 0;color:#363330;}
+#copyright{position:absolute;bottom:5px;right:25px;font-size:.8em;color:#666666;}
+.bookcover{float:left;}
+.bookcode{font-style:italic;font-size:.8em;padding:0 5px;}
+.bookdetail{float:left;width:900px;margin:0 0 0 5px;}
+.bookdetail em{font-style:normal;color:red;}
+.booktitle{float:left;width:100%;margin:0;font-weight:bold;}
+.bookinfo{float:left;width:100%;margin:0;}
+.prev,.next{text-decoration: none; color:black;}
+.tip{font-size:.5em;color:#666666;display:block;clear:both;}
+.tip a{text-decoration:none; color:black;}
+.hit {color: red; font-weight: bold; }
+</style>
+</head>
+
+<body>
+<div id="wrapper">
+    <div id="inputbox">
+        <input type="text" id="keyword" value="明" placeholder="Typing keywords..." />
+        <button id="submit" onclick="search();">
+    &nbsp;</button>
+        <p class="tip">Data Source: <a href="http://www.lib.xjtu.edu.cn/custom.do?id=309">XJTU Library</a> | Source Code：<a href="https://github.com/hehuan2112/xjtu-ancient-books">GitHub</a></p>
+    </div>
+    <div id="resultbox">
+        <div id="pagerbox">
+        </div>
+        <div id="listbox">
+            <ul id="list">
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="./static/js/elasticlunr.min.js"></script>
+<script src="./static/js/lunr.stemmer.support.js"></script>
+<script src="./static/js/tinyseg.js"></script>
+<script src="./static/js/lunr.jp.js"></script>
+
+<script>
+
+// helper for string
+String.prototype.format = String.prototype.f = function() {
+    var s = this,
+        i = arguments.length;
+
+    while (i--) {
+        s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);
+    }
+    return s;
+};
+
+// for debug purpose
+var tmp;
+
+// the index object of elasticlunr
+var abidx = elasticlunr(function () {
+    this.use(lunr.jp);
+    this.addField('code');
+    this.addField('info');
+    this.setRef('code');
+});
+
+// search the keywords
+var kw = null;
+var query_rs = null;
+var num_books_perpage = 12;
+var tt;
+var np;
+var pn;
+
+function search(f){
+    kw = $('#keyword').val();
+    if (kw=='') { return 0; }
+    console.log("* search for: " + kw);
+    query_rs = abidx.search(kw);
+    tt = query_rs.length;
+    console.log("* found: " + tt);
+
+    if (tt % num_books_perpage == 0) { np = Math.floor(tt / num_books_perpage)}
+    else {np = Math.floor(tt / num_books_perpage) + 1}
+
+    gotopage(0);
+}
+
+function gotopage(g){
+    var ret = {
+        'success': true, 
+        'pager': {
+            'tt': tt,
+            'np': np,
+            'pn': g
+        },
+        "hits": []
+    };
+    // format the result
+    for (var i=g*num_books_perpage; 
+         (i<query_rs.length && i<(g+1)*num_books_perpage); 
+         i++) {
+        var hit = {
+            '_source': {
+                code: query_rs[i].doc.code,
+                title: query_rs[i].doc.title.replace(kw, '<span class="hit">'+kw+'</span>'),
+                info: query_rs[i].doc.info.replace(kw, '<span class="hit">'+kw+'</span>')
+            },
+            '_score': query_rs[i].score
+        }
+        ret.hits.push(hit);
+    }
+    update_view(ret);
+}
+
+var tpl_pager = [
+"<span class='tt'>total: {0} books, {1} pages</span> | ",
+"<span class='pn'>current: {2}</span> | ",
+"<a class='prev' href='javascript:gotopage({3});'>prev</a> | ",
+"<a class='next' href='javascript:gotopage({4});'>next</a>"
+].join('');
+var tpl_li = [
+"<li class='bookitem'>",
+"  <img class='bookcover' src='static/img/bookitem.png'>",
+"  <div class='bookdetail'>",
+"    <p class='booktitle'>",
+"      <span class='bookcode'>{0}</span>",
+"      {1}",
+"    </p>",
+"    <pre class='bookinfo'>{2}</pre>",
+"  </div>",
+"</li>"
+].join('');
+
+
+function update_view(data){
+    // update pager
+    tt = data['pager']['tt'];
+    np = data['pager']['np'];
+    pn = data['pager']['pn'];
+    if (pn>0) { prev = pn - 1;} 
+    else { prev = 0; }
+    if (pn<np-1) { next = pn + 1;} 
+    else { next = np - 1; }
+    pager = tpl_pager.f(
+        data['pager']['tt'],
+        data['pager']['np'],
+        data['pager']['pn']+1,
+        prev, next
+    );
+    $('#pagerbox').html(pager);
+
+    // update list
+    $('#list').html('');
+    for (var i=0;i<data['hits'].length;i++){
+        hit = data['hits'][i];
+        // Find infos
+        code = hit['_source']['code'];
+        title = hit['_source']['title']; 
+        info = hit['_source']['info'];
+        // if('title' in hit['highlight']){title=hit['highlight']['title'];}
+        // else { title = hit['_source']['title']; }
+        // if('info' in hit['highlight']) { info = hit['highlight']['info'];}
+        // else { info = hit['_source']['info']; }
+
+        // append a new li 
+        li = tpl_li.f(code,title,info);
+        $('#list').append(li);
+    }
+}
+
+function create_index(data) {
+    for (var i=0; i<data.books.length; i++) {
+        abidx.addDoc(data.books[i]);
+    }
+    console.log('* indexed ' + data.books.length + ' books');
+}
+
+function init() {
+    $.get(
+        './static/data/books.json',
+        {},
+        function(data) {
+            create_index(data);
+        }, 'json'
+    );
+}
+$(document).ready(function(){
+    $('#keyword').keydown(function(evt){
+        var key = evt.which;
+        if (key==13) {
+            $('#submit').click();
+            return false;
+        }
+    });
+    $('#submit').mousedown(function(evt){
+        $(this).css('background-position','3px 3px');
+    }).mouseup(function(){
+        $(this).css('background-position','');
+    });
+
+    init();
+});
+</script>
+</body>
+</html>
