@@ -11,7 +11,7 @@ body{background:url('static/img/bg.jpg') no-repeat;}
 #inputbox{position: absolute; left: 450px; top: 10px; }
 #keyword{background:url('static/img/inputline.png') 0 35px no-repeat transparent;
          border:0;height:40px;line-height:30px;text-indent:10px;
-         font-size:18px; width:290px;font-family:'Microsoft YaHei';
+         font-size:18px; width:290px;font-family:'Microsoft YaHei', sans-serif;
          float:left;font-weight:bold;color:#666666;}
 #keyword:focus{outline:0;}
 #submit{width:35px;height:35px;border:0;float:left;
@@ -19,7 +19,7 @@ body{background:url('static/img/bg.jpg') no-repeat;}
 #submit:hover{cursor:pointer;}
 #submit:focus{outline:0;}
 #resultbox{position: absolute; left: 0px; top: 80px; margin:0 0 0 40px; width:1200px;}
-#pagerbox{float:left;padding:0 0 0 40px; font-family: 'Courier New', Courier, monospace; }
+#pagerbox{float:left;padding:0 0 0 40px; font-family: 'Courier New', Courier, monospace; font-size: .8em; }
 #listbox{float:left;}
 #list{float:left;list-style:none;}
 #list li{float:left;margin:0 0 10px 0;color:#363330;}
@@ -30,7 +30,8 @@ body{background:url('static/img/bg.jpg') no-repeat;}
 .bookdetail em{font-style:normal;color:red;}
 .booktitle{float:left;width:100%;margin:0;font-weight:bold;}
 .bookinfo{float:left;width:100%;margin:0;}
-.prev,.next{text-decoration: none; color:black;}
+.prev,.next{padding: 2px 4px; text-decoration: none; color:black; border-bottom: 1px solid #333;}
+.prev:hover, .next:hover { background: #333; color: white;}
 .tip{font-size:.5em;color:#666666;display:block;clear:both;}
 .tip a{text-decoration:none; color:black;}
 .hit {color: red; font-weight: bold; }
