@@ -19,7 +19,7 @@ body{background:url('static/img/bg.jpg') no-repeat;}
 #submit:hover{cursor:pointer;}
 #submit:focus{outline:0;}
 #resultbox{position: absolute; left: 0px; top: 80px; margin:0 0 0 40px; width:1200px;}
-#pagerbox{float:left;padding:0 0 0 40px;}
+#pagerbox{float:left;padding:0 0 0 40px; font-family: 'Courier New', Courier, monospace; }
 #listbox{float:left;}
 #list{float:left;list-style:none;}
 #list li{float:left;margin:0 0 10px 0;color:#363330;}
@@ -39,7 +39,7 @@ body{background:url('static/img/bg.jpg') no-repeat;}
 
 <body>
 <div id="wrapper">
-    <div id="inputbox">
+    <div id="inputbox" style="display: none;">
         <input type="text" id="keyword" value="明" placeholder="Typing keywords..." />
         <button id="submit" onclick="search();">
     &nbsp;</button>
@@ -195,6 +195,7 @@ function create_index(data) {
         abidx.addDoc(data.books[i]);
     }
     console.log('* indexed ' + data.books.length + ' books');
+    $('#inputbox').show();
 }
 
 function init() {
